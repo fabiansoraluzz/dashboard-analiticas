@@ -1,0 +1,60 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL") 
+}
+
+// 1. MODELO DE USUARIO (Para Autenticación y Roles)
+// Requisito PDF: Autenticación con roles (admin, viewer) [cite: 80]
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  role      String   @default("viewer") // 'admin' puede editar, 'viewer' solo ver
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// 2. MODELO PRINCIPAL DE VENTAS (El corazón del Dashboard)
+// Requisito PDF: Centralizar información crítica y permitir filtros [cite: 77, 83]
+model Sale {
+  id          String   @id @default(cuid())
+  
+  // Datos Financieros para KPIs (Ventas Totales)
+  amount      Float
+  status      String   @default("completed") // 'completed', 'pending', 'failed'
+  
+  // Datos del Cliente para Tabla de Datos y KPI de Usuarios
+  customerName  String
+  customerEmail String
+  
+  // CAMPOS CLAVE PARA LOS FILTROS DEL PDF 
+  // Permiten el "Gráfico de pie/donut: distribución" y "Filtros globales"
+  category    String   // Ej: "Electrónica", "Hogar", "Servicios"
+  region      String   // Ej: "Norte", "Sur", "Europa" (Para filtro de Región)
+  
+  // Fecha para "Gráfico de líneas: tendencia temporal" 
+  date        DateTime @default(now())
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([date])     // Optimiza la búsqueda por rango de fechas
+  @@index([category]) // Optimiza el filtro por categoría
+  @@index([region])   // Optimiza el filtro por región
+}
+
+// 3. MODELO DE TRÁFICO WEB (Para KPI de Conversión)
+// Requisito PDF: KPI de Conversión 
+// Necesitamos saber cuánta gente entra vs. cuántas ventas (Sale) hay.
+model WebsiteTraffic {
+  id        String   @id @default(cuid())
+  date      DateTime @default(now()) @unique // Una entrada por día
+  visitors  Int      // Número de visitas
+  pageViews Int      // Número de vistas de página
+  source    String?  // Ej: "Google", "Directo" (Opcional para gráficos extra)
+}
