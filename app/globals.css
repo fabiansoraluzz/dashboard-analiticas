@@ -119,7 +119,19 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Prevenir que Radix/Shadcn oculte el scrollbar y cause saltos */
+html {
+  overflow-y: scroll;
+  /* Mantiene el scroll siempre visible */
+}
+
+/* Opcional: Esto evita que el body reciba padding extra */
+body[data-scroll-locked] {
+  margin-right: 0 !important;
 }

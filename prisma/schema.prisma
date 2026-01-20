@@ -8,6 +8,18 @@ datasource db {
   url      = env("DATABASE_URL") 
 }
 
+// Modelo para la vista de Productos
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  price       Float
+  stock       Int      @default(0)
+  category    String
+  status      String   @default("active") // active, draft, archived
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 // 1. MODELO DE USUARIO (Para Autenticación y Roles)
 // Requisito PDF: Autenticación con roles (admin, viewer) [cite: 80]
 model User {
@@ -57,4 +69,13 @@ model WebsiteTraffic {
   visitors  Int      // Número de visitas
   pageViews Int      // Número de vistas de página
   source    String?  // Ej: "Google", "Directo" (Opcional para gráficos extra)
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  title     String
+  message   String
+  type      String   @default("info") // info, warning, success
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
 }
