@@ -37,21 +37,27 @@ export async function deleteUser(userId: string) {
     revalidatePath("/users")
 }
 
-// 2. Acción para crear Producto
+// --- PRODUCTOS ---
 export async function createProduct(formData: FormData) {
     const name = formData.get("name") as string
     const category = formData.get("category") as string
+    // Importante: Convertir de string a número para la base de datos
     const price = parseFloat(formData.get("price") as string)
     const stock = parseInt(formData.get("stock") as string)
 
     await prisma.product.create({
-        data: { name, category, price, stock, status: 'active' }
+        data: {
+            name,
+            category,
+            price,
+            stock,
+            status: 'active'
+        }
     })
 
     revalidatePath("/products")
 }
 
-// --- PRODUCTOS ---
 export async function deleteProduct(productId: string) {
     await prisma.product.delete({ where: { id: productId } })
     revalidatePath("/products")
@@ -105,5 +111,60 @@ export async function updateProfile(formData: FormData) {
         revalidatePath("/", "layout")
     } catch (error) {
         throw error;
+    }
+}
+
+export async function registerSale(formData: FormData) {
+    const productId = formData.get("productId") as string;
+    const quantityRaw = formData.get("quantity") as string;
+    const quantity = Number(quantityRaw);
+
+    try {
+        // --- VALIDACIONES ---
+        if (isNaN(quantity) || !Number.isInteger(quantity) || quantity <= 0) {
+            return { success: false, message: "La cantidad debe ser un número entero positivo." };
+        }
+
+        const product = await prisma.product.findUnique({ where: { id: productId } });
+
+        if (!product) {
+            return { success: false, message: "El producto seleccionado no existe." };
+        }
+
+        if (product.stock < quantity) {
+            // Retornamos false pero SIN lanzar error (evita el 500 en consola)
+            return {
+                success: false,
+                message: `Stock insuficiente. Solo quedan ${product.stock} unidades.`
+            };
+        }
+
+        // --- TRANSACCIÓN ---
+        await prisma.$transaction([
+            prisma.product.update({
+                where: { id: productId },
+                data: { stock: { decrement: quantity } }
+            }),
+            prisma.sale.create({
+                data: {
+                    amount: product.price * quantity,
+                    category: product.category,
+                    customerName: "Cliente Mostrador",
+                    customerEmail: "cliente@local.com",
+                    status: "completed",
+                    date: new Date(),
+                    region: "Sucursal Central"
+                }
+            })
+        ]);
+
+        revalidatePath("/");
+        revalidatePath("/products");
+
+        return { success: true, message: "Venta registrada exitosamente." };
+
+    } catch (error) {
+        console.error("Error interno:", error);
+        return { success: false, message: "Ocurrió un error inesperado en el servidor." };
     }
 }

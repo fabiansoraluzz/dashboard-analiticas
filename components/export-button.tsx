@@ -1,49 +1,38 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Download, Loader2 } from "lucide-react" // Importamos Loader2
-import * as XLSX from 'xlsx'
-import { toast } from "sonner"
-import { useState } from "react" // Importamos useState
+import { Download } from "lucide-react"
+import * as XLSX from "xlsx"
 
-export function ExportButton({ data }: { data: any[] }) {
-    const [isLoading, setIsLoading] = useState(false); // Estado de carga
+interface ExportButtonProps {
+    data: any[];
+    fileName?: string;
+    label?: string;
+}
 
-    const handleExport = async () => {
-        setIsLoading(true); // 1. Activar carga
+export function ExportButton({
+    data,
+    fileName = "Reporte.xlsx",
+    label = "Exportar"
+}: ExportButtonProps) {
 
-        // Simulamos un pequeño delay para que el usuario vea la animación (UX)
-        await new Promise(resolve => setTimeout(resolve, 800));
+    const handleExport = () => {
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(data);
 
-        try {
-            const ws = XLSX.utils.json_to_sheet(data);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Reporte");
-            XLSX.writeFile(wb, `Reporte_Analiticas_${new Date().toISOString().split('T')[0]}.xlsx`);
-            toast.success("Reporte descargado correctamente");
-        } catch (error) {
-            toast.error("Error al generar el reporte");
-        } finally {
-            setIsLoading(false); // 2. Desactivar carga siempre
-        }
+        XLSX.utils.book_append_sheet(wb, ws, "Datos");
+        XLSX.writeFile(wb, fileName);
     }
 
     return (
         <Button
+            variant="outline"
+            className="gap-2 border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900 shadow-sm"
             onClick={handleExport}
-            disabled={isLoading} // Deshabilitar si carga
-            className="bg-slate-900 text-white shadow-lg hover:bg-slate-800 gap-2 transition-all"
+            disabled={!data || data.length === 0}
         >
-            {isLoading ? (
-                <>
-                    <Loader2 className="h-4 w-4 animate-spin" /> {/* Icono girando */}
-                    Generando...
-                </>
-            ) : (
-                <>
-                    <Download className="h-4 w-4" /> Exportar Reporte
-                </>
-            )}
+            <Download className="h-4 w-4" />
+            {label}
         </Button>
     )
 }

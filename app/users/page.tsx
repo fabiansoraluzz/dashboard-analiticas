@@ -1,77 +1,111 @@
 import { prisma } from "@/lib/prisma";
-import { AddUserDialog } from "@/components/add-user-dialog";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { UserActions } from "@/components/user-actions"; // <--- Importamos el componente cliente
+import { UserActions } from "@/components/user-actions";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
+import { Search } from "@/components/search";
+import { Users as UsersIcon } from "lucide-react";
 
 export default async function UsersPage({
-    searchParams
+    searchParams,
 }: {
-    searchParams: Promise<{ q?: string }>
+    searchParams: Promise<{ q?: string }>;
 }) {
     const params = await searchParams;
     const query = params.q || "";
 
     const users = await prisma.user.findMany({
-        where: query ? {
+        where: {
             OR: [
-                { name: { contains: query, mode: 'insensitive' } },
-                { email: { contains: query, mode: 'insensitive' } }
-            ]
-        } : {},
-        orderBy: { createdAt: 'desc' }
+                { name: { contains: query, mode: "insensitive" } },
+                { email: { contains: query, mode: "insensitive" } },
+            ],
+        },
+        orderBy: { createdAt: "desc" },
     });
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                    <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">Usuarios</h2>
-                    {query && <p className="text-sm text-slate-500">Resultados para: "{query}"</p>}
+        <div className="space-y-6 animate-in fade-in duration-500">
+
+            {/* HEADER DE USUARIOS */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
+                <div className="flex items-center gap-3">
+                    <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-blue-600 dark:text-blue-400">
+                        <UsersIcon className="h-6 w-6" />
+                    </div>
+                    <div>
+                        <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Usuarios</h2>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">Gestión de acceso y roles.</p>
+                    </div>
                 </div>
-                <div className="w-full sm:w-auto">
-                    <AddUserDialog />
+                <div className="w-full md:w-auto">
+                    <Search />
                 </div>
             </div>
 
-            <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
-                {users.length === 0 ? (
-                    <div className="p-8 text-center text-slate-500">No se encontraron usuarios.</div>
-                ) : (
-                    <div className="overflow-x-auto">
-                        {/* CORRECCIÓN: Nos aseguramos de que no haya espacios entre table y thead */}
-                        <table className="w-full text-sm text-left min-w-[600px]">
-                            <thead className="bg-slate-50 text-slate-500 font-medium">
-                                <tr>
-                                    <th className="px-4 md:px-6 py-4">Usuario</th>
-                                    <th className="px-4 md:px-6 py-4">Rol</th>
-                                    <th className="px-4 md:px-6 py-4 text-right">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y">
-                                {users.map((user) => (
-                                    <tr key={user.id} className="hover:bg-slate-50 transition-colors">
-                                        <td className="px-4 md:px-6 py-4 flex items-center gap-3">
-                                            <Avatar className="h-8 w-8 shrink-0"><AvatarFallback>{user.name?.[0]}</AvatarFallback></Avatar>
-                                            <div className="min-w-0 max-w-[150px] md:max-w-none">
-                                                <p className="font-bold text-slate-900 truncate">{user.name}</p>
-                                                <p className="text-xs text-slate-500 truncate">{user.email}</p>
-                                            </div>
-                                        </td>
-                                        <td className="px-4 md:px-6 py-4">
-                                            <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-bold whitespace-nowrap">
-                                                {user.role}
+            {/* TABLA */}
+            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-sm overflow-hidden">
+                <Table>
+                    <TableHeader className="bg-slate-50 dark:bg-slate-900">
+                        <TableRow className="hover:bg-slate-50 dark:hover:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+                            <TableHead className="w-[300px] text-slate-600 dark:text-slate-400 font-semibold">Usuario</TableHead>
+                            <TableHead className="text-slate-600 dark:text-slate-400 font-semibold">Rol</TableHead>
+                            <TableHead className="text-slate-600 dark:text-slate-400 font-semibold">Estado</TableHead>
+                            <TableHead className="text-right text-slate-600 dark:text-slate-400 font-semibold">Acciones</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {users.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan={4} className="h-24 text-center text-slate-500">
+                                    No se encontraron usuarios.
+                                </TableCell>
+                            </TableRow>
+                        ) : (
+                            users.map((user) => (
+                                <TableRow key={user.id} className="group hover:bg-slate-50 dark:hover:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800/50 last:border-none transition-colors">
+                                    <TableCell className="flex items-center gap-3 font-medium">
+                                        <Avatar className="h-9 w-9 border border-slate-100 dark:border-slate-800">
+                                            <AvatarImage src={`/avatars/${user.id}.png`} />
+                                            <AvatarFallback className="bg-slate-100 dark:bg-slate-800 font-bold text-slate-600 dark:text-slate-300">
+                                                {/* CORRECCIÓN: Usamos (user.name || "U") para evitar el error de null */}
+                                                {(user.name || "U").charAt(0).toUpperCase()}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        <div className="flex flex-col">
+                                            {/* CORRECCIÓN: Fallback si no hay nombre */}
+                                            <span className="text-slate-900 dark:text-white font-medium">
+                                                {user.name || "Sin Nombre"}
                                             </span>
-                                        </td>
-                                        <td className="px-4 md:px-6 py-4 text-right">
-                                            <UserActions user={user} />
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
+                                            <span className="text-xs text-slate-500 dark:text-slate-400 font-normal">{user.email}</span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge variant="outline" className="capitalize font-medium border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300">
+                                            {user.role}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 hover:bg-emerald-100 border-none shadow-none font-medium px-2 py-0.5">
+                                            Activo
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        <UserActions user={user} />
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        )}
+                    </TableBody>
+                </Table>
             </div>
         </div>
-    )
+    );
 }
