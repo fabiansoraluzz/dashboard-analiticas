@@ -1,10 +1,11 @@
 "use client"
 
 import { Input } from "@/components/ui/input"
-import { Search as SearchIcon } from "lucide-react" // Renombramos el icono aquí
+import { Search as SearchIcon } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
+import { Suspense } from "react"
 
-export function Search() {
+function SearchBarContent() {
     const searchParams = useSearchParams()
     const { replace } = useRouter()
 
@@ -20,10 +21,8 @@ export function Search() {
 
     return (
         <div className="relative w-full md:w-[300px]">
-            {/* Icono decorativo */}
             <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500 dark:text-slate-400" />
 
-            {/* Input funcional */}
             <Input
                 type="search"
                 placeholder="Buscar..."
@@ -32,5 +31,13 @@ export function Search() {
                 defaultValue={searchParams.get("q")?.toString()}
             />
         </div>
+    )
+}
+
+export function Search() {
+    return (
+        <Suspense fallback={<div className="w-full md:w-[300px] h-10 rounded-md bg-slate-100 dark:bg-slate-800 animate-pulse" />}>
+            <SearchBarContent />
+        </Suspense>
     )
 }
