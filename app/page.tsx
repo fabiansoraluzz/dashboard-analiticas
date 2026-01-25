@@ -164,8 +164,8 @@ export default async function DashboardPage({
               </div>
             </div>
             <div className={`px-2 py-1 md:px-3 text-[10px] md:text-xs font-bold rounded-full flex items-center gap-1 shrink-0 ${data.percentageChange >= 0
-                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+              : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
               }`}>
               {data.percentageChange >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
               {Math.abs(data.percentageChange).toFixed(1)}% <span className="hidden sm:inline">vs mes anterior</span>
